@@ -1,9 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { flushSync } from "react-dom";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { IMAGES_PER_COLLECTION } from "@/lib/constants";
 import type { Coleccion, GaleriaImagen } from "@/types/coleccion";
+
+const TRACK_SELECTOR = "[data-track]";
+const TRACK_SHIFT_PERCENT = -100;
+const SLIDE_DURATION_S = 0.7;
 
 const TILE_LAYOUT = [
   "aspect-4/5 sm:aspect-auto sm:flex-3",
@@ -19,35 +26,79 @@ type GalleryGridProps = {
 export const GalleryGrid = ({ colecciones }: GalleryGridProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const { contextSafe } = useGSAP({ scope: contentRef });
 
   if (colecciones.length === 0) {
     return null;
   }
 
   const lastCollectionIndex = colecciones.length - 1;
+  const hasMultipleCollections = colecciones.length > 1;
+  const nextIndex = activeIndex === lastCollectionIndex ? 0 : activeIndex + 1;
   const activeCollection = colecciones[activeIndex];
-  const activeImages = activeCollection.galeria.slice(0, IMAGES_PER_COLLECTION);
+  const slides = hasMultipleCollections
+    ? [activeCollection, colecciones[nextIndex]]
+    : [activeCollection];
+  const progressIndex = isTransitioning ? nextIndex : activeIndex;
 
-  const goToNextCollection = () => {
-    setActiveIndex((prev) => (prev === lastCollectionIndex ? 0 : prev + 1));
+  const goToNextCollection = contextSafe(() => {
+    if (isTransitioning) {
+      return;
+    }
+    setIsTransitioning(true);
+
+    gsap.to(TRACK_SELECTOR, {
+      xPercent: TRACK_SHIFT_PERCENT,
+      duration: SLIDE_DURATION_S,
+      ease: "power2.inOut",
+      clearProps: "transform",
+      onComplete: () => {
+        flushSync(() => {
+          setActiveIndex(nextIndex);
+          setIsTransitioning(false);
+        });
+      },
+    });
+  });
+
+  const openLightbox = () => {
+    if (!isTransitioning) {
+      setIsLightboxOpen(true);
+    }
   };
 
   return (
     <section className="bg-white px-6 py-10 sm:px-10 lg:px-14">
-      <div className="mx-auto flex max-w-6xl flex-col">
-        <CollectionHeader
-          name={activeCollection.titulo}
-          onNext={goToNextCollection}
-        />
+      <div ref={contentRef} className="mx-auto flex max-w-6xl flex-col">
+        <div className="relative">
+          <div className="overflow-hidden">
+            <div data-track className="flex">
+              {slides.map((coleccion, index) => (
+                <CollectionSlide
+                  key={coleccion.id}
+                  coleccion={coleccion}
+                  isNext={index > 0}
+                  onImageClick={openLightbox}
+                />
+              ))}
+            </div>
+          </div>
 
-        <MosaicGrid
-          images={activeImages}
-          collectionName={activeCollection.titulo}
-          interactive
-          onImageClick={() => setIsLightboxOpen(true)}
-        />
+          {hasMultipleCollections && (
+            <button
+              type="button"
+              onClick={goToNextCollection}
+              aria-label="Siguiente colección"
+              className="absolute right-0 top-0 bg-white pl-3 text-neutral-900 transition-transform duration-200 hover:translate-x-1"
+            >
+              <ArrowIcon className="size-4" />
+            </button>
+          )}
+        </div>
 
-        <ProgressSlider isLastActive={activeIndex === lastCollectionIndex} />
+        <ProgressSlider isLastActive={progressIndex === lastCollectionIndex} />
 
         <GalleryLinks />
       </div>
@@ -55,7 +106,7 @@ export const GalleryGrid = ({ colecciones }: GalleryGridProps) => {
       {isLightboxOpen && (
         <Lightbox
           collectionName={activeCollection.titulo}
-          images={activeImages}
+          images={activeCollection.galeria.slice(0, IMAGES_PER_COLLECTION)}
           isLastActive={activeIndex === lastCollectionIndex}
           onClose={() => setIsLightboxOpen(false)}
         />
@@ -64,25 +115,27 @@ export const GalleryGrid = ({ colecciones }: GalleryGridProps) => {
   );
 };
 
-const CollectionHeader = ({
-  name,
-  onNext,
+const CollectionSlide = ({
+  coleccion,
+  isNext,
+  onImageClick,
 }: {
-  name: string;
-  onNext: () => void;
+  coleccion: Coleccion;
+  isNext: boolean;
+  onImageClick: () => void;
 }) => (
-  <div className="flex items-center justify-between">
-    <span className="text-xs font-medium uppercase tracking-[0.15em] text-neutral-900">
-      {name}
+  <div inert={isNext} className="w-full shrink-0">
+    <span className="block text-xs font-medium uppercase tracking-[0.15em] text-neutral-900">
+      {coleccion.titulo}
     </span>
-    <button
-      type="button"
-      onClick={onNext}
-      aria-label="Siguiente colección"
-      className="text-neutral-900 transition-transform duration-200 hover:translate-x-1"
-    >
-      <ArrowIcon className="size-4" />
-    </button>
+
+    <MosaicGrid
+      images={coleccion.galeria.slice(0, IMAGES_PER_COLLECTION)}
+      collectionName={coleccion.titulo}
+      interactive
+      eager={isNext}
+      onImageClick={onImageClick}
+    />
   </div>
 );
 
@@ -90,11 +143,13 @@ const MosaicGrid = ({
   images,
   collectionName,
   interactive,
+  eager = false,
   onImageClick,
 }: {
   images: GaleriaImagen[];
   collectionName: string;
   interactive: boolean;
+  eager?: boolean;
   onImageClick?: () => void;
 }) => {
   const firstColumn = images.slice(0, 2);
@@ -109,6 +164,7 @@ const MosaicGrid = ({
             image={image}
             alt={image.alt || collectionName}
             interactive={interactive}
+            eager={eager}
             onClick={onImageClick}
             className={TILE_LAYOUT[index]}
           />
@@ -121,6 +177,7 @@ const MosaicGrid = ({
             image={image}
             alt={image.alt || collectionName}
             interactive={interactive}
+            eager={eager}
             onClick={onImageClick}
             className={TILE_LAYOUT[index + 2]}
           />
@@ -134,17 +191,19 @@ const ImageTile = ({
   image,
   alt,
   interactive,
+  eager,
   onClick,
   className,
 }: {
   image: GaleriaImagen;
   alt: string;
   interactive: boolean;
+  eager: boolean;
   onClick?: () => void;
   className: string;
 }) => {
-  const tileClassName = `group relative w-full overflow-hidden bg-neutral-200 transition-colors duration-200 ${
-    interactive ? "hover:brightness-90" : ""
+  const tileClassName = `group relative w-full overflow-hidden bg-neutral-200 ${
+    interactive ? "cursor-pointer" : ""
   } ${className}`;
 
   const content = (
@@ -153,8 +212,11 @@ const ImageTile = ({
         src={image.url}
         alt={alt}
         fill
+        loading={eager ? "eager" : undefined}
         sizes="(min-width: 640px) 50vw, 100vw"
-        className="object-cover"
+        className={`object-cover transition-transform duration-300 ${
+          interactive ? "group-hover:scale-105" : ""
+        }`}
       />
       <ExpandIcon className="absolute right-3 top-3 size-4 text-white drop-shadow" />
     </>

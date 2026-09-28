@@ -15,7 +15,7 @@ const SOCIAL_LINKS = [
 ];
 
 export const Footer = () => (
-  <footer className="bg-black px-6 pb-10 pt-16 text-white sm:px-10 lg:px-14">
+  <footer className="bg-black px-6 pb-4 pt-16 text-white sm:px-10 lg:px-14">
     <div className="mx-auto grid max-w-6xl grid-cols-1 gap-y-16 md:grid-cols-3 md:gap-x-12">
       <div className="flex flex-col gap-6">
         <Link
@@ -78,11 +78,11 @@ export const Footer = () => (
         </div>
       </div>
 
-      <div className="mt-2 md:col-span-2 md:col-start-2">
-        <p className="text-sm text-white/50">
-          Created by <span className="font-bold text-white">hipposoft</span> |
+      <div className="mt-2 md:col-span-2 md:col-start-2 mx-auto md:mx-0">
+        <Link href="https://thehipposoft.com" rel="noreferrer" target="_blank" className="text-sm text-white/50 hover:underline">
+          Created by <span className="font-bold text-white">Hipposoft</span> |
           All Right Reserved
-        </p>
+        </Link>
       </div>
     </div>
   </footer>

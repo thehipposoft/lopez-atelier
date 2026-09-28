@@ -1,5 +1,5 @@
 export const NAV_LINKS = [
-  { label: "Experiencia López Couture", href: "/experiencia" },
+  { label: "Experiencia López Couture", href: "/experiencia-lopez-couture" },
   { label: "Conoce a Diego", href: "/conoce-a-diego" },
   { label: "Colecciones", href: "/colecciones" },
   { label: "Reserva una Cita", href: "/reserva" },

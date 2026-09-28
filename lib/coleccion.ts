@@ -1,19 +1,11 @@
 import type { Coleccion, WPColeccionRaw } from "@/types/coleccion";
+import {
+  REVALIDATE_SECONDS,
+  WP_API_BASE_URL,
+  WPFetchError,
+} from "@/lib/wordpress";
 
-const WP_API_BASE_URL =
-  "https://olivedrab-seahorse-981397.hostingersite.com/wp-json/wp/v2";
 const COLECCION_ENDPOINT = `${WP_API_BASE_URL}/coleccion`;
-const REVALIDATE_SECONDS = 3600;
-
-export class WPFetchError extends Error {
-  constructor(
-    message: string,
-    public readonly status?: number
-  ) {
-    super(message);
-    this.name = "WPFetchError";
-  }
-}
 
 const mapWPColeccionToColeccion = (raw: WPColeccionRaw): Coleccion => ({
   id: raw.id,
@@ -37,7 +29,9 @@ export const getColecciones = async (): Promise<Coleccion[]> => {
 
   const raw = (await response.json()) as WPColeccionRaw[];
 
-  return raw.map(mapWPColeccionToColeccion);
+  return raw
+    .map(mapWPColeccionToColeccion)
+    .filter((coleccion) => coleccion.galeria.length > 0);
 };
 
 export const getColeccionBySlug = async (

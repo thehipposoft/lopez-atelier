@@ -22,7 +22,7 @@ export const ExperienciaHome = () => (
       </p>
 
       <Link
-        href="/experiencia"
+        href="/experiencia-lopez-couture"
         className="w-fit text-xs font-medium uppercase tracking-[0.15em] text-neutral-900 underline underline-offset-4 transition-opacity duration-200 hover:opacity-70"
       >
         Ver más

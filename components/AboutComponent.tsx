@@ -67,7 +67,7 @@ export const AboutComponent = () => {
             width={742}
             height={778}
             aria-hidden="true"
-            className="h-full w-full object-contain"
+            className="h-full w-full object-contain "
           />
           <Image
             src="/assets/images/about/diego-about.png"
@@ -85,10 +85,10 @@ export const AboutComponent = () => {
             width={642}
             height={601}
             aria-hidden="true"
-            className="pointer-events-none absolute -right-10 -top-96 w-[75%] max-w-none sm:-right-16 sm:w-[85%]"
+            className="pointer-events-none hidden lg:block absolute -right-10 -top-96 w-[75%] max-w-none sm:-right-16 sm:w-[85%]"
           />
 
-          <blockquote className="flex flex-wrap gap-1 text-[20px] w-[580px] font-garet text-neutral-700">
+          <blockquote className="flex flex-wrap gap-1 text-[20px] w-full max-w-145 font-garet text-neutral-700">
             {QUOTE_WORDS.map((word, index) => (
               <span key={index} className="reveal">
                 {word}

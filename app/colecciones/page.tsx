@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { getColecciones } from "@/lib/coleccion";
 
 export default async function ColeccionesPage() {
@@ -13,10 +14,14 @@ export default async function ColeccionesPage() {
   }
 
   return (
-    <main className="px-6 py-20 sm:px-10 lg:px-14">
+    <main className="px-6 py-40 lg:pt-48 sm:px-10 lg:px-14">
       <div className="mx-auto flex max-w-6xl flex-col gap-20">
         {colecciones.map((coleccion) => (
-          <section key={coleccion.id} className="flex flex-col gap-6">
+          <Link
+            key={coleccion.id}
+            href={`/colecciones/${coleccion.slug}`}
+            className="flex flex-col gap-6"
+          >
             <div className="flex items-baseline gap-3">
               <h2 className="font-garet text-2xl">{coleccion.titulo}</h2>
               <span className="text-sm text-neutral-400">
@@ -40,7 +45,7 @@ export default async function ColeccionesPage() {
                 </div>
               ))}
             </div>
-          </section>
+          </Link>
         ))}
       </div>
     </main>
